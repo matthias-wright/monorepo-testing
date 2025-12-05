@@ -134,6 +134,13 @@ impl<E: Clock + Rng + CryptoRng + Metrics, S: Scheme, D: Digest> State<E, S, D> 
         self.view
     }
 
+    /// HACK: Set broadcast_nullify flag for a specific view to prevent finalize votes.
+    pub fn set_broadcast_nullify_for_view(&mut self, view: View) {
+        if let Some(round) = self.views.get_mut(&view) {
+            round.set_broadcast_nullify();
+        }
+    }
+
     /// Returns the highest finalized view we have observed.
     pub const fn last_finalized(&self) -> View {
         self.last_finalized

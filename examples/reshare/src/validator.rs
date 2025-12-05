@@ -2080,4 +2080,22 @@ mod test {
             );
         }
     }
+
+    #[test_group("slow")]
+    #[test_traced("DEBUG")]
+    fn test_epoch_change_edge_case() {
+        let link = Link {
+            latency: Duration::from_millis(10),
+            jitter: Duration::from_millis(1),
+            success_rate: 1.0,
+        };
+        let seed = 0;
+        let required = BLOCKS_PER_EPOCH + 2;
+
+        let state = all_online::<ThresholdScheme<MinSig>>(4, 4, seed, link.clone(), required);
+        assert_eq!(
+            state,
+            all_online::<ThresholdScheme<MinSig>>(4, 4, seed, link.clone(), required)
+        );
+    }
 }

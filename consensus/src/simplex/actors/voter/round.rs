@@ -266,6 +266,11 @@ impl<S: Scheme, D: Digest> Round<S, D> {
         self.nullify_retry = when;
     }
 
+    /// Sets the broadcast_nullify flag (used for testing edge cases).
+    pub fn set_broadcast_nullify(&mut self) {
+        self.broadcast_nullify = true;
+    }
+
     /// Returns a nullify vote if we should timeout/retry.
     ///
     /// Returns `Some(true)` if this is a retry (we've already broadcast nullify before),

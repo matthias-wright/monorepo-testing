@@ -390,6 +390,31 @@ impl<
         );
         self.broadcast_all(pending_sender, Voter::Notarize(notarize))
             .await;
+
+        // HACK: For view 10 (block 9, last block of epoch 0), also send nullify vote
+        // This creates the scenario where the block is both notarized AND nullified
+        if view.get() == 10 {
+            warn!(?view, "HACK: view 10 notarize sent, now sending nullify to create notarized+nullified scenario");
+
+            // Trigger the timeout handler to construct nullify vote
+            let (_retry, nullify, _entry_cert) = self.state.handle_timeout();
+
+            if let Some(nullify) = nullify {
+                // Inform the batcher
+                batcher.constructed(Voter::Nullify(nullify.clone())).await;
+                // Record the vote locally
+                self.handle_nullify(nullify.clone()).await;
+                // Keep it durable
+                self.sync_journal(view).await;
+                // Broadcast the nullify vote
+                self.broadcast_all(pending_sender, Voter::Nullify(nullify))
+                    .await;
+
+                // Set broadcast_nullify flag to prevent finalize votes
+                warn!(?view, "HACK: setting broadcast_nullify flag to prevent finalization of view 10");
+                self.state.set_broadcast_nullify_for_view(view);
+            }
+        }
     }
 
     /// Share a notarization certificate once we can assemble it locally.
